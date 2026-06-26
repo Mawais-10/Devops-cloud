@@ -1,139 +1,460 @@
-# Networking Commands
+# Disk and Storage Management in Linux
 
-## Introduction
+## Introduction to Disk and Storage Management
 
-Networking commands in Linux help administrators and users diagnose network issues, verify connectivity, inspect network interfaces, monitor connections, and transfer data over the internet.
+Managing disks and storage efficiently is crucial for system performance and stability. Linux provides various commands to monitor, partition, format, mount, and manage disk storage.
 
 ---
 
-## 1. ping
+# Index of Commands Covered
 
-Checks connectivity to a remote server or host.
+## Viewing Disk Information
 
-```bash id="p1c9vq"
-ping google.com
+* `lsblk` – Display block devices
+* `fdisk -l` – List disk partitions
+* `blkid` – Show UUIDs of devices
+* `df -h` – Check disk space usage
+* `du -sh /path` – Show size of a directory
+
+## Partition Management
+
+* `fdisk /dev/sdX` – Create and manage partitions
+* `parted /dev/sdX` – Alternative to fdisk for GPT disks
+* `mkfs.ext4 /dev/sdX1` – Format a partition as ext4
+* `mkfs.xfs /dev/sdX1` – Format a partition as XFS
+
+## Mounting and Unmounting
+
+* `mount /dev/sdX1 /mnt` – Mount a partition
+* `umount /mnt` – Unmount a partition
+* `mount -o remount,rw /mnt` – Remount a partition as read-write
+
+## Logical Volume Management (LVM)
+
+* `pvcreate /dev/sdX` – Create a physical volume
+* `vgcreate vg_name /dev/sdX` – Create a volume group
+* `lvcreate -L 10G -n lv_name vg_name` – Create a logical volume
+* `mkfs.ext4 /dev/vg_name/lv_name` – Format an LVM partition
+* `mount /dev/vg_name/lv_name /mnt` – Mount an LVM partition
+
+## Swap Management
+
+* `mkswap /dev/sdX` – Create a swap partition
+* `swapon /dev/sdX` – Enable swap space
+* `swapoff /dev/sdX` – Disable swap space
+
+---
+
+# Viewing Disk Information
+
+## Using lsblk
+
+List all block devices:
+
+```bash
+lsblk
 ```
 
 ### Purpose
 
-* Verifies internet connectivity
-* Tests communication with a remote server
-* Measures network response time (latency)
+* Displays available disks
+* Shows partitions
+* Displays mount points
+* Helps identify storage devices
 
 ### Example Output
 
-```bash id="f5v6gg"
-64 bytes from google.com: icmp_seq=1 ttl=117 time=25.3 ms
+```text
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 100G  0 disk
+├─sda1   8:1    0  96G  0 part /
+└─sda2   8:2    0   4G  0 part [SWAP]
+sdb      8:16   0  20G  0 disk
 ```
 
 ---
 
-## 2. ifconfig
+## Using fdisk
 
-Displays network interface information.
+View partition details:
 
-```bash id="f4mqku"
-ifconfig
+```bash
+sudo fdisk -l
 ```
 
 ### Purpose
 
-* Shows network interfaces
-* Displays IP addresses
-* Provides network statistics
-
-### Note
-
-`ifconfig` is deprecated on many modern Linux distributions. Use `ip a` instead.
+* Lists all disks
+* Displays partition information
+* Shows partition sizes and types
 
 ---
 
-## 3. ip a
+## Using blkid
 
-Displays detailed information about network interfaces and IP addresses.
+Display UUID information:
 
-```bash id="8j9n4f"
-ip a
+```bash
+sudo blkid
 ```
 
 ### Purpose
 
-* Shows IPv4 and IPv6 addresses
-* Displays interface status
-* Shows MAC addresses
+* Shows UUIDs of partitions
+* Useful for configuring `/etc/fstab`
+* Identifies filesystems
 
-### Example
+---
 
-```bash id="gtvflz"
-2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP>
+## Using df
+
+Check available disk space:
+
+```bash
+df -h
+```
+
+### Explanation
+
+* `-h` = Human-readable format
+
+### Purpose
+
+* Shows free disk space
+* Displays used storage
+* Monitors filesystem capacity
+
+---
+
+## Using du
+
+Find the size of a directory:
+
+```bash
+du -sh /var/log
+```
+
+### Explanation
+
+* `-s` = Summary
+* `-h` = Human-readable
+
+### Purpose
+
+* Identify large directories
+* Analyze storage consumption
+
+---
+
+# Partition Management
+
+## Creating a Partition with fdisk
+
+```bash
+sudo fdisk /dev/sdX
+```
+
+### Common Commands Inside fdisk
+
+| Key | Action                 |
+| --- | ---------------------- |
+| n   | Create a new partition |
+| d   | Delete a partition     |
+| p   | Print partition table  |
+| w   | Save changes and exit  |
+| q   | Exit without saving    |
+
+After creating a partition:
+
+```bash
+lsblk
+```
+
+Verify that the new partition exists.
+
+---
+
+## Using parted
+
+Alternative partition management tool for GPT disks:
+
+```bash
+sudo parted /dev/sdX
+```
+
+### Features
+
+* Supports GPT partition tables
+* Handles large disks
+* Interactive partition management
+
+---
+
+## Formatting a Partition
+
+### Format as ext4
+
+```bash
+sudo mkfs.ext4 /dev/sdX1
+```
+
+### Format as XFS
+
+```bash
+sudo mkfs.xfs /dev/sdX1
+```
+
+### Purpose
+
+* Creates a filesystem
+* Prepares a partition for use
+* Erases existing data
+
+---
+
+# Mounting and Unmounting
+
+## Mount a Partition
+
+```bash
+sudo mount /dev/sdX1 /mnt
+```
+
+### Purpose
+
+* Makes the filesystem accessible
+* Connects storage to the Linux directory tree
+
+---
+
+## Unmount a Partition
+
+```bash
+sudo umount /mnt
+```
+
+### Purpose
+
+* Safely disconnects the filesystem
+* Prevents data corruption
+
+---
+
+## Remount a Partition
+
+```bash
+sudo mount -o remount,rw /mnt
+```
+
+### Purpose
+
+* Changes mount options without unmounting
+* Enables read-write access
+
+---
+
+# Logical Volume Management (LVM)
+
+## Create a Physical Volume
+
+```bash
+sudo pvcreate /dev/sdX
+```
+
+### Purpose
+
+* Converts a disk into an LVM physical volume
+
+---
+
+## Create a Volume Group
+
+```bash
+sudo vgcreate vg_name /dev/sdX
+```
+
+### Purpose
+
+* Combines one or more physical volumes
+* Creates a storage pool
+
+---
+
+## Create a Logical Volume
+
+```bash
+sudo lvcreate -L 10G -n lv_name vg_name
+```
+
+### Explanation
+
+* `-L 10G` = Size of logical volume
+* `-n lv_name` = Logical volume name
+
+---
+
+## Format the Logical Volume
+
+```bash
+sudo mkfs.ext4 /dev/vg_name/lv_name
 ```
 
 ---
 
-## 4. netstat
+## Mount the Logical Volume
 
-Displays active network connections and listening ports.
-
-```bash id="fph43q"
-netstat -tulnp
+```bash
+sudo mount /dev/vg_name/lv_name /mnt
 ```
-
-### Option Breakdown
-
-* `-t` = TCP connections
-* `-u` = UDP connections
-* `-l` = Listening ports
-* `-n` = Show numerical addresses
-* `-p` = Show process IDs
 
 ### Purpose
 
-* View open ports
-* Monitor active connections
-* Identify services listening on ports
+* Makes LVM storage accessible
 
 ---
 
-## 5. curl
+# Swap Management
 
-Fetches content from a URL.
+## Create a Swap Partition
 
-```bash id="rjlwm4"
-curl https://example.com
+```bash
+sudo mkswap /dev/sdX
 ```
 
 ### Purpose
 
-* Retrieve webpage content
-* Test APIs
-* Download data from servers
+* Prepares a partition for swap usage
 
-### Example
+---
 
-```bash id="6xm2fr"
-curl https://api.github.com
+## Enable Swap
+
+```bash
+sudo swapon /dev/sdX
+```
+
+### Purpose
+
+* Activates swap memory
+
+---
+
+## Disable Swap
+
+```bash
+sudo swapoff /dev/sdX
+```
+
+### Purpose
+
+* Deactivates swap memory
+
+---
+
+# Additional Notes - When to Use fdisk, mount, or Both
+
+## Check Available Disks
+
+Before creating or mounting anything, always check available block devices:
+
+```bash
+lsblk
+```
+
+### Example Output
+
+```text
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 100G  0 disk
+├─sda1   8:1    0  96G  0 part /
+└─sda2   8:2    0   4G  0 part [SWAP]
+sdb      8:16   0  20G  0 disk
+```
+
+### Interpretation
+
+* `sda` → Existing disk already partitioned
+* `sdb` → New disk with no partitions
+
+---
+
+## When to Use fdisk
+
+Use `fdisk` when:
+
+* The disk is brand new
+* No partitions exist
+* You need to create `/dev/sdb1`, `/dev/sdb2`, etc.
+
+Example:
+
+```bash
+sudo fdisk /dev/sdb
+```
+
+Inside fdisk:
+
+```text
+n → Create a new partition
+w → Save changes
+```
+
+Verify:
+
+```bash
+lsblk
 ```
 
 ---
 
-## 6. wget
+## When to Use mount
 
-Downloads files from the internet.
+Use `mount` when:
 
-```bash id="4nto0f"
-wget https://example.com/file.zip
+* The partition already exists
+* The partition is formatted
+* You simply want access to the storage
+
+Example:
+
+```bash
+sudo mkdir /mnt/mydisk
+sudo mount /dev/sdb1 /mnt/mydisk
 ```
 
-### Purpose
+The disk becomes accessible through:
 
-* Download files
-* Resume interrupted downloads
-* Retrieve web content
+```text
+/mnt/mydisk
+```
 
-### Example
+---
 
-```bash id="4f5ny5"
-wget https://example.com/software.tar.gz
+## When to Use fdisk + mkfs + mount
+
+Use this complete process when:
+
+* The disk is completely new
+* It has never been partitioned
+* It needs to be prepared for use
+
+### Full Setup Example
+
+```bash
+# 1. Check available disks
+lsblk
+
+# 2. Create partition
+sudo fdisk /dev/sdb
+
+# 3. Format the partition
+sudo mkfs.ext4 /dev/sdb1
+
+# 4. Create mount point
+sudo mkdir /data
+
+# 5. Mount the partition
+sudo mount /dev/sdb1 /data
 ```
 
 ---
